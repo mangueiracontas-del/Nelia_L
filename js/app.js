@@ -12,12 +12,15 @@ const app = {
   searchQuery: '',
   cart: [],
   editingId: null,
+  refreshInterval: null,
 
   async init() {
     await openIDB();
     await this.carregarDados();
     if (this.pedidos.length === 0) this.seedData();
     this.render();
+    // Atualiza a cada 15 segundos para pegar pedidos do cardápio
+    this.refreshInterval = setInterval(() => this.recarregarPedidos(), 15000);
   },
 
   async carregarDados() {
@@ -28,13 +31,48 @@ const app = {
       this.enderecos = await dbCarregarEnderecos();
       this.pedidos = await dbCarregarPedidos();
     } catch (e) {
-      console.warn('Erro ao carregar do Supabase, usando seed:', e);
+      console.warn('[carregarDados] Erro ao carregar do Supabase:', e);
+    }
+    // Se não houver dados em NENHUMA tabela, aplica seed
+    const temDados = this.produtos.length > 0 || this.combos.length > 0 ||
+                     this.clientes.length > 0 || this.enderecos.length > 0 ||
+                     this.pedidos.length > 0;
+    if (!temDados) {
+      console.log('[carregarDados] Nenhum dado encontrado, aplicando seed...');
       this.seedData();
     }
   },
 
+  async recarregarPedidos() {
+    try {
+      const pedidosAtualizados = await dbCarregarPedidos();
+      const clientesAtualizados = await dbCarregarClientes();
+      const enderecosAtualizados = await dbCarregarEnderecos();
+
+      const teveMudanca =
+        JSON.stringify(this.pedidos) !== JSON.stringify(pedidosAtualizados) ||
+        JSON.stringify(this.clientes) !== JSON.stringify(clientesAtualizados) ||
+        JSON.stringify(this.enderecos) !== JSON.stringify(enderecosAtualizados);
+
+      if (teveMudanca) {
+        this.pedidos = pedidosAtualizados;
+        this.clientes = clientesAtualizados;
+        this.enderecos = enderecosAtualizados;
+        this.render();
+        // Notifica visualmente se houver pedido novo pendente
+        const novosPendentes = this.pedidos.filter(p => p.status === 'pendente');
+        if (novosPendentes.length > 0) {
+          this.toast(`${novosPendentes.length} pedido(s) pendente(s)`, 'info');
+        }
+      }
+    } catch (e) {
+      console.warn('Erro ao recarregar pedidos:', e);
+    }
+  },
+
   seedData() {
-    this.produtos = [
+    // Só insere seed se o array estiver vazio — preserva dados cadastrados pelo usuário
+    const seedProdutos = [
       { id: 1, nome: 'Batatinha frita', preco: 20.00, visivel: true },
       { id: 2, nome: 'Batata especial', preco: 40.00, visivel: false },
       { id: 3, nome: 'Hot-dog Gourmet', preco: 15.00, visivel: false },
@@ -46,23 +84,22 @@ const app = {
       { id: 9, nome: 'Refrigerante Lata', preco: 6.00, visivel: true },
       { id: 10, nome: 'Suco Natural', preco: 10.00, visivel: true },
     ];
-    this.combos = [
+    const seedCombos = [
       { id: 1, nome: 'Combo Família', preco: 65.00, visivel: true, productIds: [7,1,9] },
       { id: 2, nome: 'Combo Individual', preco: 35.00, visivel: true, productIds: [6,1,9] },
     ];
-    this.clientes = [
+    const seedClientes = [
       { id: 1, nome: 'Luana', telefone: '(55) 94984-131252' },
       { id: 2, nome: 'Alessandra', telefone: '(55) 94988-025774' },
       { id: 3, nome: 'Ana Claudia', telefone: '(55) 27992-746007' },
       { id: 4, nome: 'Sandra Pyetro', telefone: '(55) 94917-85734' },
     ];
-    this.enderecos = [
+    const seedEnderecos = [
       { id: 1, rua: 'Rua Jari', numero: '62', bairro: 'Núcleo', cidade: 'Carajás' },
       { id: 2, rua: 'Guama', numero: '#99', bairro: 'Centro', cidade: 'Carajás' },
       { id: 3, rua: 'Rua Araguaia', numero: '54', bairro: 'Núcleo Urbano de Carajás', cidade: 'Parauapebas' },
     ];
-    // Seed de itens de pedido para demonstração
-    this.itensPedido = [
+    const seedItensPedido = [
       { id: 1, pedido_id: 1, tipo_item: 'combo', combo_id: 1, produto_id: null, quantidade: 1, preco_unitario: 65.00, subtotal: 65.00 },
       { id: 2, pedido_id: 1, tipo_item: 'produto', produto_id: 9, combo_id: null, quantidade: 1, preco_unitario: 6.00, subtotal: 6.00 },
       { id: 3, pedido_id: 2, tipo_item: 'produto', produto_id: 8, combo_id: null, quantidade: 1, preco_unitario: 23.00, subtotal: 23.00 },
@@ -71,13 +108,39 @@ const app = {
       { id: 6, pedido_id: 4, tipo_item: 'produto', produto_id: 4, combo_id: null, quantidade: 1, preco_unitario: 15.00, subtotal: 15.00 },
       { id: 7, pedido_id: 5, tipo_item: 'produto', produto_id: 7, combo_id: null, quantidade: 1, preco_unitario: 33.00, subtotal: 33.00 },
     ];
-    this.pedidos = [
+    const seedPedidos = [
       { id: 1, numero_pedido: '#1', cliente_id: 1, endereco_id: 1, tipo: 'delivery', status: 'em_preparacao', total: 67.00, forma_pagamento: 'cartao_credito', pago: false, observacao: 'Sem cebola no X-tudo', data_pedido: new Date(Date.now() - 13*60000).toISOString() },
       { id: 2, numero_pedido: '#2', cliente_id: 2, endereco_id: 2, tipo: 'delivery', status: 'em_preparacao', total: 42.00, forma_pagamento: 'pix', pago: false, observacao: '', data_pedido: new Date(Date.now() - 36*60000).toISOString() },
       { id: 3, numero_pedido: '#7', cliente_id: 3, endereco_id: 3, tipo: 'delivery', status: 'em_preparacao', total: 32.00, forma_pagamento: 'pix', pago: false, observacao: 'Troco para 50', data_pedido: new Date(Date.now() - 60*60000).toISOString() },
       { id: 4, numero_pedido: '#3', cliente_id: 4, endereco_id: null, tipo: 'mesa', status: 'em_preparacao', total: 14.00, forma_pagamento: 'dinheiro', pago: false, observacao: 'Mesa 5', entregador: 'Nelia Paula', data_pedido: new Date(Date.now() - 60*60000).toISOString() },
       { id: 5, numero_pedido: '#4', cliente_id: 4, endereco_id: null, tipo: 'mesa', status: 'entregue', total: 22.00, forma_pagamento: 'dinheiro', pago: true, observacao: 'Mesa 3', entregador: 'Nelia Paula', data_pedido: new Date(Date.now() - 65*60000).toISOString() },
     ];
+
+    // Merge: só adiciona seeds que não conflitem com IDs existentes
+    const merge = (arr, seeds, key = 'id') => {
+      const existingIds = new Set(arr.map(x => x[key]));
+      for (const s of seeds) {
+        if (!existingIds.has(s[key])) arr.push(s);
+      }
+    };
+
+    if (this.produtos.length === 0) this.produtos = seedProdutos;
+    else merge(this.produtos, seedProdutos);
+
+    if (this.combos.length === 0) this.combos = seedCombos;
+    else merge(this.combos, seedCombos);
+
+    if (this.clientes.length === 0) this.clientes = seedClientes;
+    else merge(this.clientes, seedClientes);
+
+    if (this.enderecos.length === 0) this.enderecos = seedEnderecos;
+    else merge(this.enderecos, seedEnderecos);
+
+    if (!this.itensPedido || this.itensPedido.length === 0) this.itensPedido = seedItensPedido;
+    else merge(this.itensPedido, seedItensPedido);
+
+    if (this.pedidos.length === 0) this.pedidos = seedPedidos;
+    else merge(this.pedidos, seedPedidos);
   },
 
   setFilter(f) {
@@ -205,10 +268,6 @@ const app = {
     const div = document.createElement('div'); div.textContent = text; return div.innerHTML;
   },
 
-  // ============================================================
-  // NOVO PEDIDO / EDITAR PEDIDO
-  // ============================================================
-
   openNovoPedido() {
     this.editingId = null;
     this.cart = [];
@@ -225,16 +284,13 @@ const app = {
     if (!pedido) return;
     this.editingId = id;
 
-    // Carrega os itens do pedido no carrinho
     let itens = [];
     try {
       itens = await dbCarregarItensPedido(id);
     } catch(e) {
-      // Fallback para dados locais
       itens = (this.itensPedido || []).filter(i => i.pedido_id === id).map(itemPedidoFromDb);
     }
 
-    // Converte itens do pedido para formato do carrinho
     this.cart = itens.map(item => {
       const nome = item.tipo_item === 'produto'
         ? (this.produtos.find(p => p.id === item.produto_id)?.nome || 'Produto')
@@ -246,7 +302,7 @@ const app = {
         preco_unitario: item.preco_unitario,
         quantidade: item.quantidade,
         subtotal: item.subtotal,
-        item_id_original: item.id  // guarda o ID original para sincronização
+        item_id_original: item.id
       };
     });
 
@@ -264,7 +320,6 @@ const app = {
     const enderecosOpts = this.enderecos.map(e => `<option value="${e.id}" ${pedido && pedido.endereco_id === e.id ? 'selected' : ''}>${e.rua}, ${e.numero} — ${e.bairro}</option>`).join('');
 
     return `
-      <!-- CLIENTE EXISTENTE -->
       <div id="cliente-existente-section">
         <div class="form-row">
           <div class="form-group" style="flex:2">
@@ -282,7 +337,6 @@ const app = {
         </div>
       </div>
 
-      <!-- CADASTRO RÁPIDO DE CLIENTE -->
       <div id="cliente-novo-section" style="display:none">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem">
           <span style="font-size:0.875rem;font-weight:700;color:var(--gray-800)">📝 Cadastrar novo cliente</span>
@@ -295,7 +349,7 @@ const app = {
           </div>
           <div class="form-group">
             <label class="form-label">Telefone <span class="req">*</span></label>
-            <input type="text" class="form-input" id="novo-cliente-telefone" placeholder="(99)99999-9999" maxlength="15">
+            <input type="text" class="form-input" id="novo-cliente-telefone" placeholder="(99) 99999-9999" maxlength="15" oninput="this.value = formatarTelefone(this.value)">
           </div>
         </div>
         <div style="font-size:0.75rem;font-weight:600;color:var(--gray-700);margin:0.5rem 0 0.375rem">📍 Endereço</div>
@@ -334,7 +388,6 @@ const app = {
         </button>
       </div>
 
-      <!-- ENDEREÇO DO PEDIDO -->
       <div class="form-row">
         <div class="form-group">
           <label class="form-label">Endereço de entrega</label>
@@ -371,7 +424,6 @@ const app = {
         </div>
       </div>
 
-      <!-- SELETOR DE ITENS -->
       <div class="item-selector">
         <div class="item-selector-title">🛒 Adicionar itens ao pedido</div>
         <div class="item-tabs">
@@ -381,7 +433,6 @@ const app = {
         <div class="item-grid" id="itemGrid"></div>
       </div>
 
-      <!-- CARRINHO -->
       <div class="cart-list" id="cartList"></div>
       <div class="cart-total-bar">
         <div class="cart-total-label">Total do pedido:</div>
@@ -416,31 +467,31 @@ const app = {
     const estado = document.getElementById('novo-endereco-estado').value.trim();
     const pais = document.getElementById('novo-endereco-pais').value.trim() || 'Brasil';
 
-    // Validação do telefone
-    const telefoneRegex = /^\(\d{2}\)\d{4,5}-\d{4}$/;
+    const telefoneRegex = /^\(\d{2}\)\s?\d{4,5}-\d{4}$/;
     if (!nome) { this.toast('Informe o nome do cliente.', 'error'); return; }
     if (!telefone) { this.toast('Informe o telefone do cliente.', 'error'); return; }
-    if (!telefoneRegex.test(telefone)) { this.toast('Telefone inválido. Use o formato (99)99999-9999', 'error'); return; }
+    if (!telefoneRegex.test(telefone)) { this.toast('Telefone inválido. Use o formato (99) 99999-9999', 'error'); return; }
 
-    // Verifica se já existe cliente com mesmo telefone
     const existente = this.clientes.find(c => c.telefone === telefone);
     if (existente) { this.toast('Já existe um cliente com este telefone.', 'error'); return; }
 
-    // Cria endereço
     let enderecoId = null;
     if (rua) {
-      const novoEnderecoId = this.enderecos.length > 0 ? Math.max(...this.enderecos.map(e => e.id)) + 1 : 1;
+      const novoEnderecoId = this.enderecos.length > 0 ? Math.max(...this.enderecos.map(e => Number(e.id) || 0)) + 1 : 1;
       const novoEndereco = {
         id: novoEnderecoId, pais, estado, cidade, bairro, rua, numero,
         created_at: new Date().toISOString(), updated_at: new Date().toISOString()
       };
       this.enderecos.push(novoEndereco);
-      try { await dbSalvarEndereco(novoEndereco); } catch(e) { console.warn(e); }
+      try {
+        await dbSalvarEndereco(novoEndereco);
+      } catch(e) {
+        console.warn('[salvarNovoCliente] Falha ao sincronizar endereço com Supabase:', e);
+      }
       enderecoId = novoEnderecoId;
     }
 
-    // Cria cliente
-    const novoClienteId = this.clientes.length > 0 ? Math.max(...this.clientes.map(c => c.id)) + 1 : 1;
+    const novoClienteId = this.clientes.length > 0 ? Math.max(...this.clientes.map(c => Number(c.id) || 0)) + 1 : 1;
     const novoCliente = {
       id: novoClienteId, nome, telefone,
       endereco_id: enderecoId,
@@ -449,12 +500,14 @@ const app = {
       updated_at: new Date().toISOString()
     };
     this.clientes.push(novoCliente);
-    try { await dbSalvarCliente(novoCliente); } catch(e) { console.warn(e); }
+    try {
+      await dbSalvarCliente(novoCliente);
+    } catch(e) {
+      console.warn('[salvarNovoCliente] Falha ao sincronizar cliente com Supabase:', e);
+    }
 
-    // Volta para seleção e preenche o novo cliente
     this.toggleNovoCliente(false);
 
-    // Atualiza o select de clientes
     const selectCliente = document.getElementById('ped-cliente');
     const option = document.createElement('option');
     option.value = novoClienteId;
@@ -462,7 +515,6 @@ const app = {
     selectCliente.appendChild(option);
     selectCliente.value = novoClienteId;
 
-    // Preenche endereço se houver
     if (enderecoId) {
       const selectEndereco = document.getElementById('ped-endereco');
       const optEnd = document.createElement('option');
@@ -553,7 +605,6 @@ const app = {
     const total = this.cart.reduce((s, i) => s + i.subtotal, 0);
 
     if (this.editingId) {
-      // EDIÇÃO: atualiza pedido existente
       const p = this.pedidos.find(x => x.id === this.editingId);
       if (p) {
         p.cliente_id = clienteId;
@@ -565,7 +616,6 @@ const app = {
         p.updated_at = new Date().toISOString();
         try { await dbSalvarPedido(p); } catch(e) { console.warn(e); }
 
-        // Remove itens antigos e salva novos
         const itensAntigos = (this.itensPedido || []).filter(i => i.pedido_id === this.editingId);
         for (const ia of itensAntigos) {
           try { await dbExcluirItemPedido(ia.id); } catch(e) {}
@@ -590,7 +640,6 @@ const app = {
       }
       this.toast('Pedido atualizado com sucesso!');
     } else {
-      // NOVO: cria pedido
       const nextId = this.pedidos.length > 0 ? Math.max(...this.pedidos.map(p => p.id)) + 1 : 1;
       const nextNum = '#' + nextId;
       const novo = {
@@ -711,5 +760,19 @@ const app = {
   }
 };
 
+
+// Função utilitária de máscara de telefone
+function formatarTelefone(v) {
+  const r = v.replace(/\D/g, "").slice(0, 11);
+  if (r.length === 0) return "";
+  if (r.length <= 2) return "(" + r;
+  if (r.length <= 6) return "(" + r.slice(0, 2) + ") " + r.slice(2);
+  if (r.length <= 10) return "(" + r.slice(0, 2) + ") " + r.slice(2, 6) + "-" + r.slice(6);
+  return "(" + r.slice(0, 2) + ") " + r.slice(2, 7) + "-" + r.slice(7);
+}
+
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape') app.closeModal(); });
-document.addEventListener('DOMContentLoaded', () => app.init());
+
+
+// Expõe toast globalmente para auth.js e db.js
+window.toast = app.toast.bind(app);

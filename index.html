@@ -2,112 +2,160 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PDV Pedidos</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Lanches e Massas — Cardápio</title>
   <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/cardapio.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
 
-<div class="app-container">
-  <!-- Top Bar -->
-  <div class="topbar">
-    <div class="topbar-left">
-      <div class="topbar-brand">
-        <span class="topbar-brand-icon">🛵</span>
-        <span>PDV Pedidos</span>
-      </div>
-    </div>
-    <div class="topbar-actions">
-      <button class="btn btn-secondary btn-sm" onclick="app.exportData()">📥 Exportar</button>
-      <button class="btn btn-secondary btn-sm" onclick="document.getElementById('importFile').click()">📤 Importar</button>
-      <input type="file" id="importFile" accept=".json" style="display:none" onchange="app.importData(this)">
-      <button class="btn btn-primary" onclick="app.openNovoPedido()">
-        <span>+</span> Novo pedido
-      </button>
-    </div>
+<!-- Banner -->
+<div class="cp-banner">
+  <img src="https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=800&q=80" alt="Banner" class="cp-banner-img">
+  <div class="cp-banner-overlay"></div>
+</div>
+
+<!-- Header Info -->
+<div class="cp-header">
+  <div class="cp-logo-wrap">
+    <img src="https://images.unsplash.com/photo-1550547660-d9450f859349?w=200&q=80" alt="Logo" class="cp-logo">
   </div>
-
-  <!-- Stats -->
-  <div class="stats-bar">
-    <div class="stat-card">
-      <div class="stat-label">Total do dia</div>
-      <div class="stat-value primary" id="stat-total-dia">R$ 0,00</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">Pedidos hoje</div>
-      <div class="stat-value" id="stat-pedidos-hoje">0</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">Em preparação</div>
-      <div class="stat-value warning" id="stat-em-preparacao">0</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">Entregues</div>
-      <div class="stat-value success" id="stat-entregues">0</div>
-    </div>
+  <div class="cp-header-info">
+    <h1 class="cp-title">Lanches e Massas</h1>
+    <span class="cp-status"><span class="cp-status-dot"></span> Aberto</span>
   </div>
-
-  <!-- Filters -->
-  <div class="filter-bar">
-    <button class="filter-btn active" onclick="app.setFilter('tudo')" id="filter-tudo">
-      ✓ Tudo <span class="filter-badge" id="badge-tudo">0</span>
-    </button>
-    <button class="filter-btn" onclick="app.setFilter('pendente')" id="filter-pendente">
-      Pendente <span class="filter-badge" id="badge-pendente">0</span>
-    </button>
-    <button class="filter-btn" onclick="app.setFilter('em_preparacao')" id="filter-em_preparacao">
-      Em curso <span class="filter-badge" id="badge-em_preparacao">0</span>
-    </button>
-    <button class="filter-btn" onclick="app.setFilter('pronto')" id="filter-pronto">
-      Pronto <span class="filter-badge" id="badge-pronto">0</span>
-    </button>
-    <button class="filter-btn" onclick="app.setFilter('entregue')" id="filter-entregue">
-      Entregue <span class="filter-badge" id="badge-entregue">0</span>
-    </button>
-
-    <div class="filter-right">
-      <div class="search-box">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-        <input type="text" id="searchInput" placeholder="Buscar pedido..." oninput="app.search(this.value)">
-      </div>
-    </div>
-  </div>
-
-  <!-- Orders List -->
-  <div class="orders-card">
-    <div class="orders-header">
-      <div>Pedido</div>
-      <div>Estado</div>
-      <div>Total</div>
-      <div>Cliente</div>
-      <div>Endereço</div>
-      <div style="text-align:right">Ações</div>
-    </div>
-    <div id="ordersList"></div>
+  <div class="cp-header-actions">
+    <a href="https://wa.me/5599999999999" target="_blank" class="cp-btn-icon" title="WhatsApp">💬</a>
+    <button class="cp-btn-icon" onclick="cardapio.toggleInfo()" title="Informações">ℹ️</button>
   </div>
 </div>
 
-<!-- Modal Novo Pedido -->
-<div class="modal-overlay" id="modalOverlay" onclick="app.closeModal(event)">
-  <div class="modal" onclick="event.stopPropagation()">
-    <div class="modal-header">
-      <div class="modal-title" id="modalTitle">Novo Pedido</div>
-      <button class="modal-close" onclick="app.closeModal()">&times;</button>
+<!-- Abas de Categoria -->
+<div class="cp-tabs-wrap">
+  <div class="cp-tabs" id="cpTabs">
+    <button class="cp-tab active" data-cat="destaques">🔥 Destaques</button>
+    <button class="cp-tab" data-cat="lanches">🍔 Lanches</button>
+    <button class="cp-tab" data-cat="bebidas">🥤 Bebidas</button>
+    <button class="cp-tab" data-cat="porcoes">🍟 Porções</button>
+  </div>
+</div>
+
+<!-- Conteúdo -->
+<div class="cp-container">
+  <!-- Destaques -->
+  <section class="cp-section" id="sec-destaques">
+    <h2 class="cp-section-title">Destaques</h2>
+    <div class="cp-destaques-grid" id="gridDestaques"></div>
+  </section>
+
+  <!-- Lista por categoria -->
+  <section class="cp-section" id="sec-lista">
+    <h2 class="cp-section-title" id="listaTitulo">Lanches</h2>
+    <div class="cp-lista" id="gridLista"></div>
+  </section>
+</div>
+
+<!-- Botão Flutuante do Carrinho -->
+<button class="cp-fab-cart" id="fabCart" onclick="cardapio.abrirCarrinho()">
+  <span>🛒</span>
+  <span class="cp-fab-count" id="fabCount">0</span>
+</button>
+
+<!-- Modal Carrinho -->
+<div class="cp-modal-overlay" id="modalCarrinho" onclick="cardapio.fecharCarrinho(event)">
+  <div class="cp-modal cp-modal-bottom" onclick="event.stopPropagation()">
+    <div class="cp-modal-header">
+      <h3>🛒 Seu pedido</h3>
+      <button class="cp-modal-close" onclick="cardapio.fecharCarrinho()">&times;</button>
     </div>
-    <div class="modal-body" id="modalBody"></div>
-    <div class="modal-footer">
-      <button class="btn btn-secondary" onclick="app.closeModal()">Cancelar</button>
-      <button class="btn btn-primary" onclick="app.salvarPedido()">Salvar Pedido</button>
+    <div class="cp-modal-body" id="carrinhoBody">
+      <div class="cp-empty-cart">Nenhum item no carrinho</div>
+    </div>
+    <div class="cp-modal-footer">
+      <div class="cp-total-bar">
+        <span>Total</span>
+        <span id="carrinhoTotal">R$ 0,00</span>
+      </div>
+      <button class="cp-btn-primary" onclick="cardapio.irParaCheckout()">Finalizar Pedido →</button>
     </div>
   </div>
 </div>
 
-<!-- Toast Container -->
-<div class="toast-container" id="toastContainer"></div>
+<!-- Modal Checkout -->
+<div class="cp-modal-overlay" id="modalCheckout" onclick="cardapio.fecharCheckout(event)">
+  <div class="cp-modal" onclick="event.stopPropagation()">
+    <div class="cp-modal-header">
+      <h3>📝 Finalizar Pedido</h3>
+      <button class="cp-modal-close" onclick="cardapio.fecharCheckout()">&times;</button>
+    </div>
+    <div class="cp-modal-body">
+      <div class="cp-form-group">
+        <label class="cp-label">Nome *</label>
+        <input type="text" class="cp-input" id="chk-nome" placeholder="Seu nome completo">
+      </div>
+      <div class="cp-form-group">
+        <label class="cp-label">Telefone *</label>
+        <input type="tel" class="cp-input" id="chk-telefone" placeholder="(99) 99999-9999" maxlength="15" oninput="this.value = formatarTelefone(this.value)">
+      </div>
+      <div class="cp-form-group">
+        <label class="cp-label">Endereço de entrega *</label>
+        <input type="text" class="cp-input" id="chk-rua" placeholder="Rua / Avenida">
+      </div>
+      <div class="cp-form-row">
+        <div class="cp-form-group">
+          <label class="cp-label">Número</label>
+          <input type="text" class="cp-input" id="chk-numero" placeholder="123">
+        </div>
+        <div class="cp-form-group">
+          <label class="cp-label">Bairro</label>
+          <input type="text" class="cp-input" id="chk-bairro" placeholder="Bairro">
+        </div>
+      </div>
+      <div class="cp-form-group">
+        <label class="cp-label">Forma de Pagamento *</label>
+        <select class="cp-input" id="chk-pagamento">
+          <option value="">Selecione...</option>
+          <option value="dinheiro">Dinheiro</option>
+          <option value="pix">PIX</option>
+          <option value="cartao_credito">Cartão de Crédito</option>
+          <option value="cartao_debito">Cartão de Débito</option>
+        </select>
+      </div>
+      <div class="cp-form-group">
+        <label class="cp-label">Observação</label>
+        <textarea class="cp-input" id="chk-obs" rows="2" placeholder="Ex: Sem cebola, troco para..."></textarea>
+      </div>
+      <div class="cp-resumo-pedido" id="chkResumo"></div>
+    </div>
+    <div class="cp-modal-footer">
+      <button class="cp-btn-secondary" onclick="cardapio.fecharCheckout()">Voltar</button>
+      <button class="cp-btn-primary" onclick="cardapio.enviarPedido()">📲 Enviar Pedido</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Informações -->
+<div class="cp-modal-overlay" id="modalInfo" onclick="cardapio.toggleInfo(event)">
+  <div class="cp-modal" onclick="event.stopPropagation()">
+    <div class="cp-modal-header">
+      <h3>ℹ️ Informações</h3>
+      <button class="cp-modal-close" onclick="cardapio.toggleInfo()">&times;</button>
+    </div>
+    <div class="cp-modal-body">
+      <p style="margin-bottom:0.75rem"><strong>🕐 Horário de funcionamento:</strong><br>Segunda a Sábado: 18h às 23h<br>Domingo: 18h às 22h</p>
+      <p style="margin-bottom:0.75rem"><strong>📍 Endereço:</strong><br>Rua Principal, 123 — Centro, Carajás</p>
+      <p><strong>📞 Contato:</strong><br>(55) 99999-9999</p>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="cp-toast-container" id="cpToastContainer"></div>
 
 <script src="js/config.js"></script>
 <script src="js/db.js"></script>
-<script src="js/auth.js"></script>
-<script src="js/app.js"></script>
+<script src="js/cardapio.js"></script>
 </body>
 </html>

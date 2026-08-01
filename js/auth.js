@@ -8,7 +8,7 @@ let currentUser = null;
 async function initAuth() {
   const saved = localStorage.getItem('pdv_user');
   if (saved) {
-    currentUser = JSON.parse(saved);
+    try { currentUser = JSON.parse(saved); } catch(e) { currentUser = null; }
   }
   updateAuthUI();
 }
@@ -22,8 +22,8 @@ async function login(nome, senha) {
   currentUser = {
     id:   usuario.id,
     nome: usuario.nome,
-    role: usuario.role, // 'admin', 'caixa', 'garcom', 'cozinha', 'entregador'
-    tipo: usuario.tipo  // 'admin' ou 'normal'
+    role: usuario.role,
+    tipo: usuario.tipo
   };
   localStorage.setItem('pdv_user', JSON.stringify(currentUser));
   updateAuthUI();
@@ -39,11 +39,10 @@ function fazerLogout() {
 }
 
 function updateAuthUI() {
+  // Elementos opcionais — só atualiza se existirem na página
   const lbl = document.getElementById('user-nav-label');
-  if (currentUser) {
-    lbl.textContent = currentUser.nome;
-  } else {
-    lbl.textContent = 'Entrar';
+  if (lbl) {
+    lbl.textContent = currentUser ? currentUser.nome : 'Entrar';
   }
 
   const logArea  = document.getElementById('logado-area');
@@ -125,30 +124,46 @@ function renderLoginForm() {
 }
 
 async function doLogin() {
-  const nome = document.getElementById('login-nome').value.trim();
-  const senha = document.getElementById('login-senha').value;
+  const nome = document.getElementById('login-nome');
+  const senha = document.getElementById('login-senha');
 
   if (!nome || !senha) { 
     toast('Preencha nome de usuario e senha.', 'error'); 
     return; 
   }
 
-  const ok = await login(nome, senha);
+  const ok = await login(nome.value.trim(), senha.value);
   if (ok) {
     toast('Bem-vindo, ' + currentUser.nome + '!', 'success');
-    document.getElementById('login-form-area').style.display = 'none';
-    document.getElementById('logado-area').style.display = 'block';
-    document.getElementById('logado-nome').textContent = currentUser.nome + ' (' + currentUser.role + ')';
-    showPage('pedidos');
+
+    const formArea = document.getElementById('login-form-area');
+    const logArea = document.getElementById('logado-area');
+    const loginArea = document.getElementById('login-area');
+    const appArea = document.getElementById('app-area');
+
+    if (formArea) formArea.style.display = 'none';
+    if (logArea) {
+      logArea.style.display = 'block';
+      const nm = document.getElementById('logado-nome');
+      if (nm) nm.textContent = currentUser.nome + ' (' + currentUser.role + ')';
+    }
+    if (loginArea) loginArea.style.display = 'none';
+    if (appArea) {
+      appArea.style.display = 'block';
+      if (typeof app !== 'undefined' && app.init) await app.init();
+    }
   } else {
     toast('Nome de usuario ou senha incorretos.', 'error');
-    document.getElementById('login-senha').value = '';
+    senha.value = '';
   }
 }
 
 // ---- Alterar senha do usuario logado ----
 function openChangePassword() {
-  document.getElementById('senha-content').innerHTML = `
+  const senhaContent = document.getElementById('senha-content');
+  if (!senhaContent) return;
+
+  senhaContent.innerHTML = `
     <div style="background:var(--bg3);border-radius:var(--radius);padding:8px 14px;margin-bottom:16px;font-size:12px;color:var(--text2)">
       Usuario: <span style="font-family:var(--mono);color:var(--text);font-weight:600">${esc(currentUser.nome)}</span>
     </div>
@@ -166,19 +181,23 @@ function openChangePassword() {
 }
 
 async function salvarSenha() {
-  const atual = document.getElementById('cp-atual').value;
-  const nova  = document.getElementById('cp-nova').value;
-  const conf  = document.getElementById('cp-conf').value;
+  const atual = document.getElementById('cp-atual');
+  const nova  = document.getElementById('cp-nova');
+  const conf  = document.getElementById('cp-conf');
 
   if (!atual || !nova || !conf) { 
     toast('Preencha todos os campos', 'error'); 
     return; 
   }
-  if (nova.length < 6) { 
+  if (!atual.value || !nova.value || !conf.value) { 
+    toast('Preencha todos os campos', 'error'); 
+    return; 
+  }
+  if (nova.value.length < 6) { 
     toast('Minimo 6 caracteres', 'error'); 
     return; 
   }
-  if (nova !== conf) { 
+  if (nova.value !== conf.value) { 
     toast('As senhas nao conferem', 'error'); 
     return; 
   }
@@ -186,12 +205,12 @@ async function salvarSenha() {
   const usuarios = await dbCarregarUsuarios();
   const usuario = usuarios.find(u => u.id === currentUser.id);
 
-  if (!usuario || atual !== usuario.senha) { 
+  if (!usuario || atual.value !== usuario.senha) { 
     toast('Senha atual incorreta', 'error'); 
     return; 
   }
 
-  usuario.senha = nova;
+  usuario.senha = nova.value;
   await dbSalvarUsuario(usuario);
 
   closeModal('modal-senha');
@@ -216,4 +235,25 @@ async function seedUsuariosPDV() {
     }
     console.log('Usuarios PDV padrao criados com sucesso!');
   }
+}
+
+// ---- Helpers globais ----
+function esc(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+function openModal(id) {
+  const el = document.getElementById(id);
+  if (el) el.classList.add('show');
+}
+
+function closeModal(id) {
+  const el = document.getElementById(id);
+  if (el) el.classList.remove('show');
+}
+
+function showPage(page) {
+  // Placeholder para compatibilidade
 }
