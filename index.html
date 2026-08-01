@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PDV Pedidos</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="app-container">
+  <!-- Top Bar -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="topbar-brand">
+        <span class="topbar-brand-icon">🛵</span>
+        <span>PDV Pedidos</span>
+      </div>
+    </div>
+    <div class="topbar-actions">
+      <button class="btn btn-secondary btn-sm" onclick="app.exportData()">📥 Exportar</button>
+      <button class="btn btn-secondary btn-sm" onclick="document.getElementById('importFile').click()">📤 Importar</button>
+      <input type="file" id="importFile" accept=".json" style="display:none" onchange="app.importData(this)">
+      <button class="btn btn-primary" onclick="app.openNovoPedido()">
+        <span>+</span> Novo pedido
+      </button>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-bar">
+    <div class="stat-card">
+      <div class="stat-label">Total do dia</div>
+      <div class="stat-value primary" id="stat-total-dia">R$ 0,00</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Pedidos hoje</div>
+      <div class="stat-value" id="stat-pedidos-hoje">0</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Em preparação</div>
+      <div class="stat-value warning" id="stat-em-preparacao">0</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Entregues</div>
+      <div class="stat-value success" id="stat-entregues">0</div>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="filter-bar">
+    <button class="filter-btn active" onclick="app.setFilter('tudo')" id="filter-tudo">
+      ✓ Tudo <span class="filter-badge" id="badge-tudo">0</span>
+    </button>
+    <button class="filter-btn" onclick="app.setFilter('pendente')" id="filter-pendente">
+      Pendente <span class="filter-badge" id="badge-pendente">0</span>
+    </button>
+    <button class="filter-btn" onclick="app.setFilter('em_preparacao')" id="filter-em_preparacao">
+      Em curso <span class="filter-badge" id="badge-em_preparacao">0</span>
+    </button>
+    <button class="filter-btn" onclick="app.setFilter('pronto')" id="filter-pronto">
+      Pronto <span class="filter-badge" id="badge-pronto">0</span>
+    </button>
+    <button class="filter-btn" onclick="app.setFilter('entregue')" id="filter-entregue">
+      Entregue <span class="filter-badge" id="badge-entregue">0</span>
+    </button>
+
+    <div class="filter-right">
+      <div class="search-box">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+        <input type="text" id="searchInput" placeholder="Buscar pedido..." oninput="app.search(this.value)">
+      </div>
+    </div>
+  </div>
+
+  <!-- Orders List -->
+  <div class="orders-card">
+    <div class="orders-header">
+      <div>Pedido</div>
+      <div>Estado</div>
+      <div>Total</div>
+      <div>Cliente</div>
+      <div>Endereço</div>
+      <div style="text-align:right">Ações</div>
+    </div>
+    <div id="ordersList"></div>
+  </div>
+</div>
+
+<!-- Modal Novo Pedido -->
+<div class="modal-overlay" id="modalOverlay" onclick="app.closeModal(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-title" id="modalTitle">Novo Pedido</div>
+      <button class="modal-close" onclick="app.closeModal()">&times;</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="app.closeModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="app.salvarPedido()">Salvar Pedido</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast Container -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script src="js/config.js"></script>
+<script src="js/db.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
