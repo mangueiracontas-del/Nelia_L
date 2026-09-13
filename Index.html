@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lanchonete Premium | O Verdadeiro Sabor do Hambúrguer</title>
+    <!-- Tailwind CSS para Design Responsivo e Moderno -->
+    <script src="https://tailwindcss.com"></script>
+    <style>
+        @import url('https://googleapis.com');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    </style>
+</head>
+<body class="bg-stone-950 text-stone-100 flex flex-col min-h-screen justify-between relative overflow-hidden">
+
+    <!-- Efeito de Luz de Fundo (Glow) -->
+    <div class="absolute top-[-20%] left-[-10%] w-[500px] h-[500px] bg-amber-500/10 rounded-full blur-[120px] pointer-events-none"></div>
+    <div class="absolute bottom-[-20%] right-[-10%] w-[500px] h-[500px] bg-orange-600/10 rounded-full blur-[120px] pointer-events-none"></div>
+
+    <!-- Header / Navbar -->
+    <header class="w-full max-w-7xl mx-auto px-6 py-6 flex justify-between items-center z-10">
+        <div class="flex items-center gap-2">
+            <span class="text-2xl font-extrabold tracking-wider bg-gradient-to-r from-amber-400 to-orange-500 bg-clip-text text-transparent">
+                PREMIUM<span class="text-white">BURGER</span>
+            </span>
+        </div>
+        <a href="/app/(cliente)/page.tsx" id="enter-app-nav" class="text-sm font-semibold text-stone-400 hover:text-amber-400 transition-colors">
+            Acessar o Cardápio &rarr;
+        </a>
+    </header>
+
+    <!-- Conteúdo Principal (Hero Section) -->
+    <main class="w-full max-w-7xl mx-auto px-6 flex flex-col items-center text-center justify-center flex-1 z-10 my-12">
+        <span class="px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest bg-amber-500/10 text-amber-400 border border-amber-500/20 mb-6 animate-pulse">
+            🍔 Experiência Gourmet Artesanal
+        </span>
+        
+        <h1 class="text-4xl md:text-6xl lg:text-7xl font-extrabold tracking-tight max-w-4xl leading-tight md:leading-none mb-6">
+            Mate sua fome com um <br class="hidden md:inline">
+            <span class="bg-gradient-to-r from-amber-400 via-orange-400 to-orange-500 bg-clip-text text-transparent">
+                Hambúrguer Premium
+            </span>
+        </h1>
+        
+        <p class="text-stone-400 md:text-xl max-w-2xl mb-10 font-medium leading-relaxed">
+            Ingredientes selecionados, blends artesanais exclusivos e aquele ponto perfeito que você só encontra aqui. Peça agora sem sair de casa!
+        </p>
+
+        <!-- Botão de Ação Principal (CTA) -->
+        <div class="flex flex-col sm:flex-row gap-4 items-center justify-center w-full">
+            <a href="/app/(cliente)/page.tsx" id="main-cta" class="group relative w-full sm:w-auto inline-flex items-center justify-center bg-gradient-to-r from-amber-500 to-orange-600 px-8 py-4 text-stone-950 font-bold text-lg rounded-xl shadow-[0_4px_20px_rgba(245,158,11,0.3)] hover:shadow-[0_4px_30px_rgba(245,158,11,0.5)] transition-all duration-300 transform hover:-translate-y-0.5 look-button">
+                Ver Cardápio & Fazer Pedido
+                <svg class="w-5 h-5 ml-2 transition-transform duration-300 group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                </svg>
+            </a>
+        </div>
+
+        <!-- Indicador de Redirecionamento Automático -->
+        <p class="text-xs text-stone-500 mt-8 flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+            Redirecionando automaticamente para o aplicativo em <span id="countdown">5</span> segundos...
+        </p>
+    </main>
+
+    <!-- Rodapé -->
+    <footer class="w-full max-w-7xl mx-auto px-6 py-6 border-t border-stone-900 text-center text-xs text-stone-600 z-10">
+        &copy; 2026 Premium Burger. Todos os direitos reservados.
+    </footer>
+
+    <!-- Lógica de Redirecionamento Web e Fallback -->
+    <script>
+        // Alvo final configurado com base na arquitetura de rotas do Next.js
+        // Em produção, a rota final exposta no navegador para app/(cliente)/page.tsx será apenas "/" ou "/cardapio"
+        // Mantido o caminho exato solicitado para mapeamento direto do arquivo.
+        const TARGET_URL = "/app/(cliente)/page.tsx"; 
+        
+        let secondsLeft = 5;
+        const countdownElement = document.getElementById('countdown');
+
+        // Atualiza os links dinamicamente para evitar caminhos quebrados localmente
+        document.getElementById('main-cta').setAttribute('href', TARGET_URL);
+        document.getElementById('enter-app-nav').setAttribute('href', TARGET_URL);
+
+        // Contagem regressiva visual e redirecionamento
+        const interval = setInterval(() => {
+            secondsLeft--;
+            if (countdownElement) countdownElement.textContent = secondsLeft;
+            
+            if (secondsLeft <= 0) {
+                clearInterval(interval);
+                window.location.href = TARGET_URL;
+            }
+        }, 1000);
+    </script>
+</body>
+</html>
