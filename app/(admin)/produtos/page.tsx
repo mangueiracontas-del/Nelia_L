@@ -29,13 +29,13 @@ export default async function ProdutosPage() {
         </thead>
         <tbody>
           {produtos?.map((p) => (
-            <tr key={p.id} className="border-b last:border-0">
+            <tr key={p.id} className="border-b last:border-0">{
               <td className="px-4 py-3 font-medium">{p.nome}</td>
-              <td className="px-4 py-3 text-gray-600"><td className="px-4 py-3 text-gray-600">{p.categorias?.[0]?.nome}</td>
+              <td className="px-4 py-3 text-gray-600">{p.categorias?.[0]?.nome}</td>
               <td className="px-4 py-3">R$ {Number(p.preco).toFixed(2)}</td>
-              <td className="px-4 py-3">
-                <StockBadge estoque={p.estoque} />
-              </td>
+              <td className="px-4 py-3"> {
+                <StockBadge estoque={p.estoque} /> }
+              </td>}
             </tr>
           ))}
         </tbody>
