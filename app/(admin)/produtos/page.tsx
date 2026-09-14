@@ -12,7 +12,6 @@ export default async function ProdutosPage() {
     .order("nome");
 
   return (
-    <div>
       <div className="mb-4 flex items-center justify-between">
         <h1 className="text-xl font-bold">Produtos</h1>
         <Link href="/produtos/novo" className="rounded-lg bg-primary px-4 py-2 font-semibold text-white" >
@@ -41,6 +40,5 @@ export default async function ProdutosPage() {
           ))}
         </tbody>
       </table>
-    </div>
   );
 }
