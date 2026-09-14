@@ -55,7 +55,7 @@ export default function PedidosPage() {
   }
 
   return (
-    <div>
+    <div> {
       <h1 className="mb-4 text-xl font-bold">Fila de pedidos</h1>
       <ul className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
         {pedidos.map((p) => (
@@ -78,7 +78,7 @@ export default function PedidosPage() {
             )}
           </li>
         ))}
-      </ul>
+      </ul>}
     </div>
   );
 }
